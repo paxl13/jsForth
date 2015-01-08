@@ -5,9 +5,8 @@ define(["knockout", "text!./home.html"], function(ko, homeTemplate) {
         var printLine = lineOutputMethod;
         var printChar = charOuputMethod;
 
-        var F_IMMED = 0x80;
-        var F_HIDDEN = 0x20;
-        var F_LENMASK = 0x1f;
+        var F_IMMED = 0x02;
+        var F_HIDDEN = 0x01;
 
         var _stack = [];
         var _retStack = [];
@@ -120,7 +119,7 @@ define(["knockout", "text!./home.html"], function(ko, homeTemplate) {
                     });
         }
 
-        defcode("EXIT", "EXIT", 0, function (prevIP) {
+        defcode("EXIT", "EXIT", 0, function EXIT() {
             _ip = _retStack.pop();
             NEXT();
         });
@@ -305,6 +304,20 @@ define(["knockout", "text!./home.html"], function(ko, homeTemplate) {
 //        defcode("RSP@", 0, function () { /* TODO */ });
 //        defcode("RSP!", 0, function () { /* TODO */ });
 
+        defcode("BRANCH", "BRANCH", 0, function BRANCH() {
+            var val = _mem[++_ip];
+            _ip += parseInt(val) - 1; // to compensate for NEXT
+            NEXT();
+        });
+        defcode("0BRANCH", "ZBRANCH", 0, function () {
+            var val = _mem[++_ip];
+            var TOS = _stack.pop();
+            if (TOS === 0) {
+                _ip += parseInt(val) - 1; // to compensate for NEXT
+            }
+            NEXT();
+        });
+
         // INPUT / OUTPUT
 
         defcode("EMIT", "EMIT", 0, function EMIT() {
@@ -319,6 +332,7 @@ define(["knockout", "text!./home.html"], function(ko, homeTemplate) {
             /* TODO */
         });
 
+        // DICTIONARY Words
         defcode("FIND", "FIND", 0, function FIND() {
             var c = LATEST;
             var n = _stack.pop();
@@ -335,28 +349,34 @@ define(["knockout", "text!./home.html"], function(ko, homeTemplate) {
 
         defword(">CFA", "TCFA", 0, "LIT 3 ADD EXIT");
         defword(">DFA", "TDFA", 0,  "LIT 4 ADD EXIT");
+
+
+        // COMPILATION
         defcode("CREATE", "CREATE", 0, function CREATE() { /* TODO */ });
         defcode(",", "COMMA", 0, function COMMA() {
             var TOS = _stack.pop();
             _mem[HERE++] = TOS;
             NEXT();
         });
-        defcode("[", "ECMP", 0, function ECMP() { /* TODO */ });
-        defcode("]", "TCMP", 0, function TCMP() { /* TODO */ });
+        defword("[", "ECMP", F_IMMED, "0 STATE ! EXIT");
+        defword("]", "TCMP", 0, "1 STATE ! EXIT");
 
-        defword(":", "COLON", F_IMMED, "WORD CREATE LIT DOCOL , LATEST FETCH HIDDEN ] EXIT");
-        defword(";", "SEMICOLON", F_IMMED, "LIT EXIT , LATEST FETCH HIDDEN [ EXIT");
-        defcode("IMMEDIATE", "IMMEDIATE", 0, function () { /* TODO */ });
-        defcode("HIDDEN", "HIDDEN", 0, function () { /* TODO */ });
-        defword("HIDE", "HIDE", 0, "WORD FIND HIDDEN EXIT");
-        defcode("'", "TICK", 0, function () { /* TODO */ });
-        defcode("BRANCH", "BRANCH", 0, function BRANCH() {
-            var val = _mem[++_ip];
-            _ip += parseInt(val) - 1; // to compensate for NEXT
+        defword(":", "COLON", F_IMMED, "WORD CREATE LIT DOCOL COMMA LATEST FETCH HIDDEN ] EXIT");
+        defword(";", "SEMICOLON", F_IMMED, "LIT EXIT COMMA LATEST FETCH HIDDEN [ EXIT");
+        defcode("IMMEDIATE", "IMMEDIATE", F_IMMED, function () {
+            _mem[LATEST+1] ^= F_IMMED;
             NEXT();
         });
-        defcode("0BRANCH", "0BRANCH", 0, function () { /* TODO */ });
-        defcode("QUIT", "QUIT", 0, function () { /* TODO */ });
+        defcode("HIDDEN", "HIDDEN", 0, function () {
+            var TOS = _stack.pop();
+            _mem[TOS+1] ^= F_HIDDEN;
+            NEXT();
+        });
+        defword("HIDE", "HIDE", 0, "WORD FIND HIDDEN EXIT");
+        defcode("'", "TICK", 0, function TICK() {
+            var val = _mem[++_ip];
+
+        });
         defcode("INTERPRET", "INTERPRET", 0, function () { /* TODO */ });
         defcode("CHAR", "CHAR", 0, function () { /* TODO */ });
         defcode("EXECUTE", "EXECUTE",  0, function () { /* TODO */ });
@@ -366,22 +386,23 @@ define(["knockout", "text!./home.html"], function(ko, homeTemplate) {
         defvar("LATEST", "LATEST", 0, HERE);
         defvar("TE", "TE", 0, 1337);
 
-        defword("TESTVAR", "TESTVAR", 0, "TE @ INCR TE ! EXIT");
-        defword("TESTVAR2", "TESTVAR2", 0, "LIT 1 LIT 2 EXIT");
-        defword("QUIT", "QUIT", 0, "LIT 0 TESTVAR BRANCH -2");
+        defword("TESTVAR", "TESTVAR", 0, "TE FETCH INCR TE STORE EXIT");
+        defword("TESTHIDE", "TESTHIDE", 0, "LIT TESTVAR HIDDEN EXIT");
+        defword("TESTBRANCH", "TESTBRANCH", 0, "LIT 0 ZBRANCH 3 LIT 1 LIT 2 LIT 3 EXIT");
+        defword("QUIT", "QUIT", 0, "LIT 0 TESTHIDE BRANCH -2");
 
-        function NEXT () {
+        function NEXT() {
             _ip = _ip+1;
             _current = _mem[_ip];
         }
 
-        function DOCOL ()  {
+        function DOCOL()  {
             _retStack.push(_ip);
             _ip = _current;
             NEXT();
         }
 
-        function EXIT () {
+        function EXIT() {
             _ip = _retStack.pop();
             NEXT();
         }
