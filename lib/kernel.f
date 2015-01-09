@@ -10,7 +10,7 @@
 
 : TRUE 1 ;
 : FALSE 0 ;
-: NOT 0=;
+: NOT 0= ;
 
 : NEGATE 0 SWAP - ;
 
@@ -160,3 +160,68 @@
     +
     EMIT
 ;
+
+: .S ( -- )
+    S0@ 1+
+    BEGIN
+        DUP 0<>
+    WHILE
+        DUP 1- DSP@ U.
+        SPACE
+        1-
+    REPEAT
+    DROP
+;
+
+: UWIDTH ( u -- width )
+    BASE @ /
+    ?DUP IF
+        RECURSE 1+
+    ELSE
+        1
+    THEN
+;
+
+: U.R ( u width -- )
+    SWAP
+    DUP
+    UWIDTH
+    ROT
+    SWAP -
+    SPACES
+    U.
+;
+
+: .R ( u width -- )
+    SWAP
+    DUP 0 <
+    IF
+        NEGATE
+        1
+        SWAP
+        ROT
+        1-
+    ELSE
+        0
+        SWAP
+        ROT
+    THEN
+    SWAP
+    DUP
+    UWIDTH
+    ROT
+    SWAP -
+
+    SPACES
+
+    SWAP
+    IF
+        '-' EMIT
+    THEN
+
+    U.
+;
+
+: . 0 .R SPACE ;
+
+: U. U. SPACE ;
