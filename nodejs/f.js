@@ -46,7 +46,6 @@ var kIn = function () {
         var c = response[0].charCodeAt(0);
     return c;
     } else {
-        debugger;
         var c = data[dPtr++];
         if (dPtr >= data.length)
         {
