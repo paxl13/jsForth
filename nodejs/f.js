@@ -21,23 +21,40 @@ process.stdin.setRawMode(true);
 //  }
 //});
 
+var fs = require('fs');
+console.log("Executing kernel.f");
+var data = fs.readFileSync('../lib/kernel.f');
+var dPtr = 0;
+var dDone = false;
+
 var cOut = function (c) {
     var s = String.fromCharCode(c);
     process.stdout.write(s);
 };
 
 var lOut = function (arg) {
-    console.log(arg);
+    process.stdout.write(arg);
 };
 
 var kIn = function () {
-    process.stdin.resume();
-    var fs = require('fs');
-    var response = fs.readSync(process.stdin.fd, 100, 0, "utf8");
-    process.stdin.pause();
+    if (dDone) {
+        process.stdin.resume();
+        var fs = require('fs');
+        var response = fs.readSync(process.stdin.fd, 100, 0, "utf8");
+        process.stdin.pause();
 
-    var c = response[0].charCodeAt(0);
+        var c = response[0].charCodeAt(0);
     return c;
+    } else {
+        debugger;
+        var c = data[dPtr++];
+        if (dPtr >= data.length)
+        {
+            dDone = true;
+            console.log("Done with kernel.f");
+        }
+        return c;
+    }
 }
 
 var jsForth = new JsForth(lOut, cOut, kIn);
