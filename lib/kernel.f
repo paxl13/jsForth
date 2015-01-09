@@ -127,3 +127,36 @@
 
 : NIP ( x y -- y ) SWAP DROP ;
 : TUCK ( x y -- y x y ) SWAP OVER ;
+: PICK ( x_u ... x_1 x_0 u -- x_u ... x_1 x_0 x_u )
+    \ TODO
+;
+
+: SPACES ( n -- )
+    BEGIN
+        DUP 0>
+    WHILE
+        SPACE
+        1-
+    REPEAT
+    DROP
+;
+
+: DECIMAL ( -- ) 10 BASE ! ;
+: HEX ( -- ) 16 BASE ! ;
+
+: U. ( u -- )
+    BASE @ /MOD
+    ?DUP IF
+        RECURSE
+    THEN
+
+    DUP 10 <
+    IF
+        '0'
+    ELSE
+        10 -
+        'A'
+    THEN
+    +
+    EMIT
+;
