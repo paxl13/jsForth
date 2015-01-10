@@ -161,17 +161,6 @@
     EMIT
 ;
 
-: .S ( -- )
-    S0@ 1+
-    BEGIN
-        DUP 0<>
-    WHILE
-        DUP 1- DSP@ U.
-        SPACE
-        1-
-    REPEAT
-    DROP
-;
 
 : UWIDTH ( u -- width )
     BASE @ /
@@ -211,17 +200,41 @@
     UWIDTH
     ROT
     SWAP -
-
     SPACES
-
     SWAP
     IF
         '-' EMIT
     THEN
-
     U.
 ;
 
 : . 0 .R SPACE ;
 
+: LTNUMBERGT ( u -- ) \ Print <u>
+    [ CHAR < ] LITERAL EMIT
+    U.
+    [ CHAR > ] LITERAL EMIT
+    SPACE
+;
+
+ : .S ( -- )
+     DEPTH DUP ( d d )
+     1+ LTNUMBERGT ( d d+1 -- d )
+     0 ( d cnt )
+     BEGIN
+         2DUP   ( d cnt d cnt )
+         >=     ( d cnt d>=cnt )
+     WHILE
+         DUP    ( d cnt -- d cnt cnt )
+         DSP@ . ( display number )
+         1+     ( d cnt - d cnt+1)
+     REPEAT
+     2DROP      ( d cnt -- )
+     CR
+ ;
+
 : U. U. SPACE ;
+
+: .s .S ;
+
+: ? @ . ;
