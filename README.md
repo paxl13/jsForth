@@ -5,10 +5,10 @@ A simple DTC forth based on [jonesForth](http://git.annexia.org/?p=jonesforth.gi
 ## How to run it
 
 ### Web Version
-Simply go to (jsForth)[paxl13.github.io/jsForth] **This is not yet working**
+Simply go to (jsForth)[http://paxl13.github.io/jsForth] **This is not yet working**
 
 ### Node.Js version
 Checkout this code and execute _nodejs/_run.bat_
 
 
-This project wouldn't have been possible without (Macadamian Technologies)[www.macadamian.com]. A wonderful thanks to them for allowing myself to work on this during my work hours.
+This project wouldn't have been possible without (Macadamian Technologies)[http://www.macadamian.com] A wonderful thanks to them for allowing myself to work on this during my work hours.
