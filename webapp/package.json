@@ -1,0 +1,8 @@
+{
+  "name": "jsForth",
+  "description": "",
+  "author": "",
+  "dependencies": {
+    "uglifyify": "latest"
+  }
+}
