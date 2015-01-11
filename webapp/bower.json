@@ -1,0 +1,25 @@
+{
+  "name": "jsForth",
+  "version": "0.0.0",
+  "homepage": "https://github.com/paxl13/jsForth",
+  "authors": [
+    "Xavier LaRue <xlarue@macadamian.com>"
+  ],
+  "main": "dist/index.html",
+  "moduleType": [
+    "globals"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "jquery": "LATEST",
+    "jquery.
+
+  },
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
