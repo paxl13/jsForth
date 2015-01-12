@@ -109,7 +109,7 @@
     1
     BEGIN
         KEY
-        DUP EMIT
+        \ DUP EMIT We don't need to print them anymore
         DUP '(' =
         IF
               DROP
@@ -237,4 +237,4 @@
 
 : ? @ . ;
 
-: KERNELF_VERSION 1 ;
+: KERNELF_VERSION 2 ;
