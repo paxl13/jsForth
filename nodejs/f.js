@@ -8,8 +8,8 @@ var JsForth = require('../lib/jsForth.js');
 //  if (key && key.ctrl && key.name == 'c') process.exit();
 //});
 
-process.stdin.setEncoding('utf8');
-process.stdin.setRawMode(true);
+//process.stdin.setEncoding('utf8');
+//process.stdin.setRawMode(true);
 
 //process.stdin.on('readable', function() {
 //  var chunk = process.stdin.read();
@@ -34,27 +34,33 @@ var cOut = function (c) {
 
 var lOut = function (arg) {
     process.stdout.write(arg);
-};
-
-var kIn = function () {
-    if (dDone) {
-        process.stdin.resume();
-        var fs = require('fs');
-        var response = fs.readSync(process.stdin.fd, 100, 0, "utf8");
-        process.stdin.pause();
-
-        var c = response[0].charCodeAt(0);
-    return c;
-    } else {
-        var c = data[dPtr++];
-        if (dPtr >= data.length)
-        {
-            dDone = true;
-            console.log("Done with kernel.f");
-        }
-        return c;
-    }
 }
 
-var jsForth = new JsForth(lOut, cOut, kIn);
+var jsForth = new JsForth(lOut, cOut);
+
+process.stdin.on('readable', function() {
+  var chunk = process.stdin.read();
+  if (chunk !== null) {
+      var c = "";
+      for (var i = 0; i < chunk.length; i++) {
+          var w = String.fromCharCode(chunk[i]);
+          c += w;
+      };
+      jsForth.pushIntoInputBuffer(c);
+  }
+});
+
+process.stdin.on('end', function() {
+  process.stdout.write('end');
+});
+
+debugger;
+var sss = "";
+for (var i = 0; i < data.length; i++) {
+    var ww = String.fromCharCode(data[i]);
+    sss += ww;
+};
+
+jsForth.pushIntoInputBuffer(sss);
 console.log("Will never reach that point");
+
