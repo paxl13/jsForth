@@ -3,6 +3,7 @@
   "description": "",
   "author": "",
   "dependencies": {
-    "uglifyify": "latest"
+    "uglifyify": "latest",
+    "brfs": "latest"
   }
 }

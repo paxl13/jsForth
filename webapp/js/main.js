@@ -1,6 +1,7 @@
-var JsForth = require('../../lib/jsForth.js');
-
 $(document).ready(function () {
+    var JsForth = require('../../lib/jsForth.js');
+    var kernelF = require('fs').readFileSync(__dirname + '/../../lib/kernel.f', 'utf8');
+
     console.log("STARTING THE BEAST");
     var jsForth = null;
 
@@ -22,5 +23,5 @@ $(document).ready(function () {
     };
 
     jsForth = new JsForth(lOut, cOut);
-
+    jsForth.pushIntoInputBuffer(kernelF);
 });
