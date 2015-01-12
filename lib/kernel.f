@@ -1,5 +1,4 @@
 \ vim: set syntax=forth:
-
 \ This file contain the kernel of jsForth, it is everthing that was missing into
 \ the inner core
 
@@ -161,7 +160,6 @@
     EMIT
 ;
 
-
 : UWIDTH ( u -- width )
     BASE @ /
     ?DUP IF
@@ -238,3 +236,5 @@
 : .s .S ;
 
 : ? @ . ;
+
+: KERNELF_VERSION 1 ;
