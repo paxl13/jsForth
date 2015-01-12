@@ -22,7 +22,6 @@ var JsForth = require('../lib/jsForth.js');
 //});
 
 var fs = require('fs');
-console.log("Executing kernel.f");
 var data = fs.readFileSync('../lib/kernel.f');
 var dPtr = 0;
 var dDone = false;
@@ -62,5 +61,3 @@ for (var i = 0; i < data.length; i++) {
 };
 
 jsForth.pushIntoInputBuffer(sss);
-console.log("Will never reach that point");
-

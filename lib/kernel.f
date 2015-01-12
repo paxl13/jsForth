@@ -250,15 +250,24 @@
 : .s .S ;
 
 : S" IMMEDIATE          ( compile: -- ) ( execute: -- string )
-\ grab the string ont the input
+    0 >R
     BEGIN
-        KEY     ( k -- )
-        DUP     ( k k -- )
-        '"' <>
-    WHILE
-        >STR    ( "k" "k" -- )
-        +       ( "kk" -- )
-    REPEAT
+        R> 1+ >R
+        KEY
+        DUP >STR SWAP
+        '"' =
+    UNTIL
+    DROP
+
+    R>
+    2 -
+
+    BEGIN
+        >R
+        SWAP +
+        R> 1- DUP 0=
+    UNTIL
+    DROP
 
     STATE @ IF          ( s -- )
         ' LITSTRING ,
@@ -266,8 +275,24 @@
     THEN
 ;
 
-: ." ;
+: ." IMMEDIATE
+    [COMPILE] S"
+
+    STATE @ IF
+        ' TELL ,
+    ELSE
+        TELL CR
+    THEN
+;
 
 : ? @ . ;
 
-: KERNELF_VERSION 3 ;
+: KERNELF_VERSION 4 ;
+
+: GREETING
+    ." Welcome to jsForth" CR
+    ." jsForth Core Ver #" CORE_VERSION . CR
+    ." Forth Kernel Ver #" KERNELF_VERSION . CR
+;
+
+GREETING
