@@ -40,8 +40,14 @@
     ,
 ;
 
-\ condition IF true ELSE false THEN
-\ condition IF true THEN
+\ Here are the current conditional implemented!
+\ condition IF [code if true] ELSE [code if false] THEN
+\ condition IF [code if true] THEN
+\ not-condition UNLESS [code if false] ELSE [code if true] THEN
+\ not-condition UNLESS [code if false] THEN
+\ BEGIN [code] condition UNTIL
+\ BEGIN [code] AGAIN
+\ BEGIN condition WHILE [code] REPEAT
 
 : IF IMMEDIATE
     ' 0BRANCH ,
@@ -65,8 +71,6 @@
     SWAP !
 ;
 
-\ BEGIN loop-part condition UNTIL
-\ BEGIN loop-part AGAIN
 
 : BEGIN IMMEDIATE
     HERE @
@@ -84,7 +88,6 @@
     ,
 ;
 
-\ BEGIN condition WHILE loop-part REPEAT
 : WHILE IMMEDIATE
     ' 0BRANCH ,
     HERE @
@@ -206,7 +209,18 @@
     U.
 ;
 
-: . 0 .R SPACE ;
+: . ( u -- )
+    DUP
+    ?STR
+    IF
+        '"' EMIT
+        TELL
+        '"' EMIT
+        SPACE
+    ELSE
+        0 .R SPACE
+    THEN
+;
 
 : LTNUMBERGT ( u -- ) \ Print <u>
     [ CHAR < ] LITERAL EMIT
@@ -235,6 +249,25 @@
 
 : .s .S ;
 
+: S" IMMEDIATE          ( compile: -- ) ( execute: -- string )
+\ grab the string ont the input
+    BEGIN
+        KEY     ( k -- )
+        DUP     ( k k -- )
+        '"' <>
+    WHILE
+        >STR    ( "k" "k" -- )
+        +       ( "kk" -- )
+    REPEAT
+
+    STATE @ IF          ( s -- )
+        ' LITSTRING ,
+        ,               ( -- )
+    THEN
+;
+
+: ." ;
+
 : ? @ . ;
 
-: KERNELF_VERSION 2 ;
+: KERNELF_VERSION 3 ;
