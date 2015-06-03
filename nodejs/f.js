@@ -1,41 +1,39 @@
 var JsForth = require('../lib/jsForth.js');
-
-//var stdin = process.openStdin();
-//require('tty').setRawMode(true);
-//
-//stdin.on('keypress', function (chunk, key) {
-//  process.stdout.write('Get Chunk: ' + chunk + '\n');
-//  if (key && key.ctrl && key.name == 'c') process.exit();
-//});
-
-//process.stdin.setEncoding('utf8');
-//process.stdin.setRawMode(true);
-
-//process.stdin.on('readable', function() {
-//  var chunk = process.stdin.read();
-//  if (chunk !== null) {
-//    if ( chunk[0] === '\u0003' ) {
-//       process.exit();
-//    }
-//    process.stdout.write(chunk[0]);
-//  }
-//});
-
 var fs = require('fs');
-var data = fs.readFileSync('../lib/kernel.f');
-var dPtr = 0;
-var dDone = false;
 
-var cOut = function (c) {
+var sourceFiles = process.argv.splice(2, 99);
+sourceFiles.unshift('../lib/kernel.f');
+
+console.log(sourceFiles);
+
+var inputStream = "";
+
+sourceFiles.forEach(function(fileName) {
+  console.log('Reading', fileName);
+
+  try {
+  var data = fs.readFileSync(fileName);
+  } catch (e) {
+    console.error(fileName, 'not found');
+    console.error('Exiting!');
+    process.exit();
+  };
+
+  for (var i = 0; i < data.length; i++) {
+      var charCode = String.fromCharCode(data[i]);
+      inputStream += charCode;
+  };
+});
+
+var jsForth = new JsForth(
+  function lOut(arg) {
+    process.stdout.write(arg);
+  }
+  , function cOut(c) {
     var s = String.fromCharCode(c);
     process.stdout.write(s);
-};
-
-var lOut = function (arg) {
-    process.stdout.write(arg);
-}
-
-var jsForth = new JsForth(lOut, cOut);
+  }
+);
 
 process.stdin.on('readable', function() {
   var chunk = process.stdin.read();
@@ -49,15 +47,4 @@ process.stdin.on('readable', function() {
   }
 });
 
-process.stdin.on('end', function() {
-  process.stdout.write('end');
-});
-
-debugger;
-var sss = "";
-for (var i = 0; i < data.length; i++) {
-    var ww = String.fromCharCode(data[i]);
-    sss += ww;
-};
-
-jsForth.pushIntoInputBuffer(sss);
+jsForth.pushIntoInputBuffer(inputStream);

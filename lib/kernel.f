@@ -2,7 +2,7 @@
 \ This file contain the kernel of jsForth, it is everthing that was missing into
 \ the inner core
 
-: NL 13 ;
+: NL 10 ;
 : BL 32 ;
 : CR NL EMIT ;
 : SPACE BL EMIT ;

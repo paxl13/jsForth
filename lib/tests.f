@@ -1,0 +1,66 @@
+\ vim: set syntax=forth:
+: ERRORCMP ( n n -- )
+  ." Error expected "
+  .
+  ." got "
+  . CR
+;
+  
+: CMPSTK IMMEDIATE
+  WORD
+  ' LIT ,
+  ,
+  ' 2DUP ,
+  ' = ,
+  [COMPILE] UNLESS
+  ' ERRORCMP ,
+  ' BYE ,
+  [COMPILE] THEN
+  ' 2DROP ,
+;
+
+: CMPSTK2 IMMEDIATE
+  [COMPILE] CMPSTK
+  [COMPILE] CMPSTK
+;
+
+: CMPSTK3 IMMEDIATE
+  [COMPILE] CMPSTK
+  [COMPILE] CMPSTK2
+;
+
+: CMPSTK4 IMMEDIATE
+  [COMPILE] CMPSTK
+  [COMPILE] CMPSTK3
+;
+
+: CMPSTK5 IMMEDIATE
+  [COMPILE] CMPSTK
+  [COMPILE] CMPSTK4
+;
+
+: CMPSTK6 IMMEDIATE
+  [COMPILE] CMPSTK
+  [COMPILE] CMPSTK5
+;
+
+: PRINT_TEST_NAME
+  ." Executing " 
+  TELL
+  ." ... "
+;
+
+: PRINT_OK
+  ." ok" CR
+;
+
+: RUNTEST 
+  WORD DUP PRINT_TEST_NAME
+  FIND >CFA EXECUTE
+  DEPTH UNLESS 
+    ." nok" CR
+    ." STACK is Dirty" CR
+    BYE
+  THEN
+  PRINT_OK
+;
