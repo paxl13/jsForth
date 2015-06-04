@@ -193,32 +193,55 @@
   LOOP
 ;
 
+: pCALC ( y2 y1 x2 x1 --  y1 yInc x1 xInc )
+  DUP   ( y2 y1 x2 x1 x1 )
+  -ROT  ( y2 y1 x1 x2 x1 )
+  -     ( y2 y1 x1 x2-x1 )
+  200 / ( y2 y1 x1 xInc )
+  >R    ( y2 y1 x1 )
+  >R    ( y2 y1 )
+  DUP   ( )
+  -ROT  ( )
+  -     ( )
+  50 /  ( y1 yInc )
+  R>
+  R>    ( y1 yInc x1 xInc )
+;
+
 : pDRAW ( y2 y1 x2 x1 )
+  pCALC ( y1 yInc x1 xInc )
   50 0 
   DO
-    I 0.08f * 2 -   ( b )
+                      ( y1 yInc x1 xInc )
+    I                 ( y1 yI x1 xI i )
+    -ROT              ( y1 yI i x1 xI )
+    >R               
+    >R                ( y1 yInc i )
+    >R                ( y1 yI )
+    2DUP              ( y1 yInc y1 yInc )
+    R>                ( y1 yI y1 yI i )
+    *                 ( y1 yInc y1 dy )
+    +                 ( y1 yInc b=dy+y1 )
+    R>
+    R>                ( y1 yInc b x1 xInc )
     200 0 
-    DO                ( b )
-      DUP             ( b b a )
-      I 0.02f * 2 -   ( b b a )
-      100             ( b zZ n )
-      ITER            ( b n )
-      RENDERPIXEL     ( b ) 
+    DO                ( y1 yInc b x1 xInc )
+      I               ( y1 yI b x1 xI i )
+      -ROT            ( y1 yI b i x1 xI )
+      2DUP            ( y1 yI b i x1 xI x1 xI )
+      >R >R           ( y1 yI b i x1 xI )
+      ROT             ( y1 yI b x1 xI i )
+      * +             ( y1 yI b a )
+      OVER -ROT       ( y1 yI b b a )
+      100 ITER        ( y1 yI b n )
+      RENDERPIXEL     ( y1 yI b ) 
+      R> R>           ( y1 yI b x1 xI )
     LOOP
-    DROP              ( )
+    ROT              ( y1 yI x1 xI b )
+    DROP              ( y1 yI x1 xI )
     CR                ( )
   LOOP
 ;
 
-: DRAW2 
-  50 0 
-  DO
-    200 0
-    DO
-      STAR
-    LOOP
-    CR
-  LOOP
-;
-
-DRAW
+2 -2 2 -2 pDRAW
+1 -1 1 -1 pDRAW
