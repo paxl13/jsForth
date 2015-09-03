@@ -1,6 +1,8 @@
 $(document).ready(function () {
     var JsForth = require('../../lib/jsForth.js');
     var kernelF = require('fs').readFileSync(__dirname + '/../../lib/kernel.f', 'utf8');
+    var console = require('fs').readFileSync(__dirname + '/../../lib/console.f', 'utf8');
+    var mandel = require('fs').readFileSync(__dirname + '/../../lib/mandelbroth.f', 'utf8');
 
     var jsForth = null;
 
@@ -37,4 +39,6 @@ $(document).ready(function () {
     jsForth = new JsForth(lOut, cOut);
     t.echo("Loading forth kernel...");
     jsForth.pushIntoInputBuffer(kernelF);
+    jsForth.pushIntoInputBuffer(console);
+    jsForth.pushIntoInputBuffer(mandel);
 });

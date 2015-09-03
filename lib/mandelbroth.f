@@ -111,13 +111,14 @@
 ;
 
 : z^2+c ( zC zZ -- zZ^2+zC )
-  z^2 z+
+  INLINE z^2 
+  INLINE z+
 ;
 
 : cNB    ( zC zZ -- zC zZ+1 )
-  zOVER  ( zC zZ zC )
-  z-ROT  ( zC zC zZ )
-  z^2+c  ( zC zZ+1 )
+  INLINE zOVER  ( zC zZ zC )
+  INLINE z-ROT  ( zC zC zZ )
+  INLINE z^2+c  ( zC zZ+1 )
 ;
 
 : ITER   ( zC n -- zF )
@@ -129,7 +130,7 @@
            ( zC zZ n c )
     >R >R  ( zC zZ )
            ( zC zZ )
-    cNB    ( zC zZ+1 )
+    INLINE cNB    ( zC zZ+1 )
 
     zDUP   ( zC zZ zZ )
     |z|    ( zC zZ |zZ| )
@@ -151,46 +152,31 @@
   R>       ( n )
 ;  
 
-: RENDERPIXEL
-  DUP             ( b n n )
-  1 <            ( b n f )
-  IF 
-    SPACE           ( b n )
-    DROP          ( b )
-  ELSE 
-                  ( b n n )
-    DUP           ( b n n )
-    3 <           ( b n f )
-    IF
-                  ( b n )
-      EQUAL       ( b n )
-      DROP        ( b )
-    ELSE
-      100 =         ( b f )
-      IF
-        STAR
-      ELSE
-        DOT
-      THEN
-    THEN
-  THEN
-;
+4 VALUE Zoom 
+-2 VALUE X1
+-2 VALUE Y1
+100 VALUE nIter
 
-: DRAW
-  50 0 
-  DO
-    I 0.08f * 2 -   ( b )
-    200 0 
-    DO                ( b )
-      DUP             ( b b a )
-      I 0.02f * 2 -   ( b b a )
-      100             ( b zZ n )
-      ITER            ( b n )
-      RENDERPIXEL     ( b ) 
-    LOOP
-    DROP              ( )
-    CR                ( )
-  LOOP
+: RENDERPIXEL ( n -- )
+  nIter 
+  2DUP =
+  IF
+    2DROP
+    32
+  ELSE
+    /
+    [ 126 48 - ] LITERAL
+    *
+    48 + 
+  THEN
+\  DUP
+\
+\  126 > IF
+\  DROP
+\  32
+\  THEN
+
+  EMIT
 ;
 
 : pCALC ( y2 y1 x2 x1 --  y1 yInc x1 xInc )
@@ -206,6 +192,11 @@
   50 /  ( y1 yInc )
   R>
   R>    ( y1 yInc x1 xInc )
+;
+
+: 4DROP
+  2DROP
+  2DROP
 ;
 
 : pDRAW ( y2 y1 x2 x1 )
@@ -233,7 +224,7 @@
       ROT             ( y1 yI b x1 xI i )
       * +             ( y1 yI b a )
       OVER -ROT       ( y1 yI b b a )
-      100 ITER        ( y1 yI b n )
+      nIter ITER        ( y1 yI b n )
       RENDERPIXEL     ( y1 yI b ) 
       R> R>           ( y1 yI b x1 xI )
     LOOP
@@ -241,7 +232,87 @@
     DROP              ( y1 yI x1 xI )
     CR                ( )
   LOOP
+  4DROP
 ;
 
-2 -2 2 -2 pDRAW
-1 -1 1 -1 pDRAW
+: tDRAW
+  EPOCH >R
+  pDRAW
+  R> EPOCH
+  SWAP -
+  ." Time Elapsed " 
+  0 .R
+  ." ms"
+  CR
+;
+
+
+: 4DUP
+  3 PICK
+  3 PICK
+  3 PICK
+  3 PICK
+;
+
+
+
+: kLOOP
+  BEGIN
+    CLEAR_SCREEN
+    Zoom Y1 + Y1
+    Zoom X1 + X1
+    nIter
+    jsS
+    DROP
+    tDRAW
+
+    KEY DUP 
+    CASE
+      [ CHAR h ] LITERAL OF
+        Zoom NEGATE +TO X1
+      ENDOF
+
+      [ CHAR k ] LITERAL OF
+        Zoom NEGATE +TO Y1
+      ENDOF
+
+      [ CHAR j ] LITERAL OF
+        Zoom +TO Y1
+      ENDOF
+
+      [ CHAR l ] LITERAL OF
+        Zoom +TO X1
+      ENDOF
+
+      [ CHAR u ] LITERAL OF
+        Zoom 2 / TO Zoom
+      ENDOF
+      
+      [ CHAR i ] LITERAL OF
+        Zoom 2 * TO Zoom
+      ENDOF
+
+      [ CHAR o ] LITERAL OF
+        nIter 2 / FLOOR TO nIter
+      ENDOF
+      
+      [ CHAR p ] LITERAL OF
+        nIter 2 * FLOOR TO nIter
+      ENDOF
+
+      [ CHAR r ] LITERAL OF
+        4 TO Zoom
+        -2 TO Y1
+        -2 TO X1
+        100 TO nIter
+      ENDOF
+
+    ENDCASE
+    [ CHAR q ] LITERAL =
+  UNTIL
+  ." EXIT "
+;
+
+\ 2 -2 2 -2 
+\ tDRAW
+kLOOP

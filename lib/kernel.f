@@ -126,7 +126,7 @@
     1
     BEGIN
         KEY
-        \ DUP EMIT We don't need to print them anymore
+        DUP EMIT
         DUP '(' =
         IF
               DROP
@@ -168,9 +168,6 @@
 
 : NIP ( x y -- y ) SWAP DROP ;
 : TUCK ( x y -- y x y ) SWAP OVER ;
-: PICK ( x_u ... x_1 x_0 u -- x_u ... x_1 x_0 x_u )
-    \ TODO
-;
 
 : SPACES ( n -- )
     BEGIN
@@ -337,6 +334,15 @@
     [COMPILE] CONSTANT
 ;
 
+\ : CELLS ( n -- n )
+\ ;
+
+: ALLOT ( n -- addr )
+    HERE @ SWAP
+    HERE +!
+;
+
+
 : VARIABLE IMMEDIATE
     WORD CREATE DOCOL!
     ' LIT ,
@@ -379,18 +385,80 @@
     THEN
 ;
 
+: ARRAY IMMEDIATE ( size -- )
+  ALLOT 
+  WORD CREATE
+  DOCOL!      ( addr )
+  ' LIT ,
+  ,
+  ' + ,
+  ' EXIT ,
+;
+
+: 2ARRAY IMMEDIATE ( y x -- )
+  2DUP
+  * ALLOT         ( y x a )
+  NIP             ( y a )
+  SWAP            ( a y )
+  WORD CREATE
+  DOCOL!      ( addr )
+  ' LIT ,
+  ,
+  ' * ,
+  ' + ,
+  ' LIT ,
+  ,
+  ' + ,
+  ' EXIT ,
+;
+
 : >NAME                   ( a -- a )
     2 +
+;
+
+: >FLAG ( a -- a )
+    1 +
+;
+
+: ?IMMEDIATE
+  >FLAG @
+  F_IMMED AND
+;
+
+: ?HIDDEN
+  >FLAG @
+  F_HIDDEN AND
 ;
 
 : ID.
     >NAME @ TELL
 ;
 
+: FLAGS.
+  DUP 
+  ?IMMEDIATE IF
+    ." IMMEDIATE"
+  THEN
+
+  ?HIDDEN IF
+    SPACE
+    ." HIDDEN"
+  THEN
+;
+
+: WORDSIZE.
+  DUP
+  @ -
+  .
+;
+
+
 : WORDS
     LATEST @
     BEGIN
         DUP ID. SPACE
+        DUP WORDSIZE.
+        DUP FLAGS. CR
         @ DUP 0=
     UNTIL
     CR
@@ -408,6 +476,132 @@
     TO TEMP ( r l i i -- r l i )
     >R >R >R
     TEMP
+;
+
+: PICK   
+  ?DUP 
+  IF 
+    SWAP >R 
+    1- 
+    RECURSE R> 
+    SWAP EXIT 
+  THEN DUP 
+;
+
+
+: :NONAME
+  0 CREATE
+  HERE @
+  DOCOL!
+  ]
+;
+
+
+: ['] IMMEDIATE
+  ' LIT ,
+;
+
+: DUMP  ( addr len -- )
+  
+;
+
+: WORDBOUNDS ( start -- end start )
+  LATEST ( l_addr start )
+  @
+
+  2DUP = 
+  UNLESS
+    BEGIN
+      2DUP    ( end start )
+      @ <>     ( f end start )
+    WHILE
+              ( end start )
+      @       ( n_end start )
+    REPEAT
+  ELSE
+    DROP
+    HERE @
+  THEN
+;
+
+
+: SEE
+  WORD FIND  ( start )
+  WORDBOUNDS ( end start )
+  SWAP       ( s e )
+
+  ':' EMIT SPACE
+  DUP ID. SPACE
+  DUP ?IMMEDIATE IF ." IMMEDIATE" THEN
+  CR SPACE SPACE
+ 
+  >DFA
+  BEGIN
+    DUP @
+    CASE
+      ' LIT OF
+        ." LIT "
+        1+
+        DUP @ .
+      ENDOF
+
+      ' LITSTRING OF
+        ." LITSTRING "
+        1+
+        [ CHAR S ] LITERAL EMIT '"' EMIT SPACE
+        DUP @ TELL '"' EMIT SPACE
+      ENDOF
+
+      ' BRANCH OF
+        ." BRANCH ( "
+        1+
+        DUP @ .
+        ." ) "
+      ENDOF
+
+      ' 0BRANCH OF
+        ." 0BRANCH ( "
+        1+
+        DUP @ .
+        ." ) "
+      ENDOF
+
+      ' ' OF
+        [ CHAR ' ] LITERAL EMIT SPACE
+        1+
+        DUP CFA> ID. SPACE
+      ENDOF
+
+      ' EXIT OF
+        2DUP 1+ <>
+        IF ." EXIT " THEN
+      ENDOF
+
+      DUP CFA> ID. SPACE
+    ENDCASE
+      ( s e )
+    1+ 2DUP =
+  UNTIL
+
+  2DROP
+  CR [ CHAR ; ] LITERAL EMIT CR
+;
+
+: INLINE IMMEDIATE
+  WORD FIND
+  WORDBOUNDS  ( e s )
+  1-       \ skip last exit
+  SWAP
+
+  >DFA        ( s e )
+  BEGIN
+    DUP @
+    jsS
+    ,
+  
+    1+ 2DUP =
+  UNTIL
+  2DROP
 ;
 
 : KERNELF_VERSION 5 ;
