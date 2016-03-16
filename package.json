@@ -1,0 +1,21 @@
+{
+  "name": "jsforth",
+  "version": "0.0.1",
+  "description": "A forth interpretor",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/paxl13/jsForth.git"
+  },
+  "author": "Xavier LaRue",
+  "bugs": {
+    "url": "https://github.com/paxl13/jsForth/issues"
+  },
+  "homepage": "https://github.com/paxl13/jsForth#readme",
+  "dependencies": {
+    "keypress": "latest"
+  }
+}
