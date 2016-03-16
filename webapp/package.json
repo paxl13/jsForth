@@ -1,9 +1,0 @@
-{
-  "name": "jsForth",
-  "description": "",
-  "author": "",
-  "dependencies": {
-    "uglifyify": "latest",
-    "brfs": "latest"
-  }
-}

@@ -1,5 +1,5 @@
 var keypress = require('keypress');
-var JsForth = require('../lib/jsForth.js');
+var JsForth = require('../src/jsForth.js');
 var fs = require('fs');
 
 var sourceFiles = process.argv.splice(2, 99);
