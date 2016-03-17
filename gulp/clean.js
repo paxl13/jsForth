@@ -1,12 +1,11 @@
 'use strict';
 
 let gulp = require('gulp');
-let wrench = require('wrench');
-
-let $ = require('gulp-load-plugins')({
-  pattern: ['run-sequence']
-});
+let sh = require('shelljs');
+let $ = require('gulp-load-plugins')();
+let c = require('./conf');
 
 gulp.task('clean', (cb) => {
+  sh.rm('-r', c.paths.build);
   cb();
 });

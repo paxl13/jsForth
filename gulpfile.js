@@ -13,5 +13,4 @@ wrench.readdirSyncRecursive('./gulp').filter((file) => {
   require('./gulp/' + file);
 });
 
-gulp.task('default', ['clean', 'linting', 'watch'], () => {
-});
+gulp.task('default', ['build', 'linting', 'watch']);

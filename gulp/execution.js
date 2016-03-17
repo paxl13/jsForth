@@ -22,5 +22,5 @@ gulp.task('proxyTTY', ['execute'], (cb) => {
 });
 
 gulp.task('watch', () => {
-  return gulp.watch([c.pathsGlobs.jsFiles], ['clean', 'linting']);
+  return gulp.watch([c.pathsGlobs.jsFiles, c.pathsGlobs.fFiles], ['linting', 'build']);
 });

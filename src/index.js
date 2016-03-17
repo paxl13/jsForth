@@ -1,77 +1,21 @@
 'use strict';
 
-var keypress = require('keypress');
-var JsForth = require('./jsForth.js');
-var fs = require('fs');
+import 'babel-polyfill';
+import ConsoleWrapper from './consoleWrapper';
+import JsForth from './jsForth';
 
-var sourceFiles = process.argv.splice(2, 99);
-sourceFiles.unshift('./forth/kernel.f');
+console.log(ConsoleWrapper);
 
-console.log(sourceFiles);
+let consoleInput = new ConsoleWrapper();
+let jsForth = new JsForth(consoleInput.printString, consoleInput.printChar);
+consoleInput.keypressFct = jsForth.pushIntoInputBuffer;
 
-var inputStream = '';
+function parse(s) {
+  jsForth.pushIntoInputBuffer(s);
+}
 
-sourceFiles.forEach(function(fileName) {
-  console.log('Reading', fileName);
+// files: kf
+// end
 
-  let data;
-
-  try {
-    data = fs.readFileSync(fileName);
-  } catch (e) {
-    console.error(fileName, 'not found');
-    console.error('Exiting!');
-    process.exit();
-  }
-
-  for (var i = 0; i < data.length; i++) {
-    var charCode = String.fromCharCode(data[i]);
-    inputStream += charCode;
-  }
-});
-
-var jsForth = new JsForth(
-  function lOut(arg) {
-    process.stdout.write(arg);
-  }, function cOut(c) {
-    var s = String.fromCharCode(c);
-    if (c === 13) {
-      process.stdout.write('\n');
-    }
-    process.stdout.write(s);
-  }
-);
-
-keypress(process.stdin);
-
-process.stdin.on('keypress', function(ch, key) {
-
-  if (key && key.ctrl && key.name === 'c') {
-    process.stdin.pause();
-  }
-
-  //  if (key && key.name == 'return') {
-  //    process.stdout.write('\n');
-  //    ch += '\n';
-  //  }
-
-  //  console.log('pushing', ch);
-  jsForth.pushIntoInputBuffer(ch);
-});
-
-process.stdin.setRawMode(true);
-process.stdin.resume();
-
-// process.stdin.on('readable', function() {
-//   var chunk = process.stdin.read();
-//   if (chunk !== null) {
-//       var c = '';
-//       for (var i = 0; i < chunk.length; i++) {
-//           var w = String.fromCharCode(chunk[i]);
-//           c += w;
-//       };
-//       jsForth.pushIntoInputBuffer(c);
-//   }
-// });
-
-jsForth.pushIntoInputBuffer(inputStream);
+// files: f
+// end

@@ -1,5 +1,4 @@
-// vim: set fdm=marker:
-module.exports = function jsForth(lOut, cOut) {
+export default function (lOut, cOut) {
   var self = this;
   var printLine = lOut;
   var printChar = cOut;
