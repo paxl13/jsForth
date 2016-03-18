@@ -2,11 +2,15 @@
 
 import 'babel-polyfill';
 import ConsoleWrapper from './consoleWrapper';
-import JsForth from './jsForth';
+import * as jsForth from './jsForth';
 
 let consoleInput = new ConsoleWrapper();
-let jsForth = new JsForth(consoleInput.printString, consoleInput.printChar);
+
+jsForth.setPrintString(consoleInput.printString);
+jsForth.setPrintChar(consoleInput.printChar);
 consoleInput.keypressFct = jsForth.pushIntoInputBuffer;
+
+//let jsForth = new JsForth(consoleInput.printString, consoleInput.printChar);
 
 function parse(s, output) { // jshint ignore:line
   console.time('compiling');
@@ -16,5 +20,6 @@ function parse(s, output) { // jshint ignore:line
   console.timeEnd('compiling');
 }
 
-// fInject:./src/forth/kernel.f,false
-// disable-Inject:./src/forth/mandelbroth.f,true
+// fInject:./src/forth/kernel.f,true
+// fInject:./src/forth/console.f,true
+// fInject:./src/forth/mandelbroth.f,true
