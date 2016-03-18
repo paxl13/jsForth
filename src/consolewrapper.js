@@ -6,11 +6,14 @@ export default function () {
 
   self.printString = printString;
   self.printChar = printChar;
+  self.enableOutput = true;
 
   self.keypressFct = undefined;
 
   function printString(s) {
-    process.stdout.write(s);
+    if (self.enableOutput) {
+      process.stdout.write(s);
+    }
   }
 
   function printChar(c) {
@@ -18,7 +21,10 @@ export default function () {
     if (c === 13) {
       process.stdout.write('\n');
     }
-    process.stdout.write(s);
+
+    if (self.enableOutput) {
+      process.stdout.write(s);
+    }
   }
 
   function handleKeypress(ch, key) {

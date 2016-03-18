@@ -3,13 +3,13 @@
 var JsForth = require('./jsForth.js');
 var fs = require('fs');
 
-var sourceFiles = ['/Users/xlarue/Work/paxl/jsForth/src/forth/kernel.f'];
+let sourceFiles = ['/Users/xlarue/Work/paxl/jsForth/src/forth/kernel.f'];
 var inputStream = '';
 
 sourceFiles.forEach(function (fileName) {
   console.log('Reading', fileName);
 
-  var data = void 0;
+  let data;
 
   try {
     data = fs.readFileSync(fileName);
@@ -25,9 +25,7 @@ sourceFiles.forEach(function (fileName) {
   }
 });
 
-var jsForth = new JsForth(function (s) {
-  return process.stdout.write(s);
-}, function (c) {
+var jsForth = new JsForth(s => process.stdout.write(s), c => {
   var s = String.fromCharCode(c);
   if (c === 13) {
     process.stdout.write('\n');
@@ -39,10 +37,10 @@ jsForth.pushIntoInputBuffer(inputStream);
 
 module.exports = exports = {
   jsForth: jsForth,
-  killForth: function killForth() {
+  killForth() {
     console.log('kill me now');
   },
-  sendInputIn: function sendInputIn(s) {
+  sendInputIn(s) {
     jsForth.pushIntoInputBuffer(s);
   }
 };

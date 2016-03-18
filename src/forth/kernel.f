@@ -1,6 +1,12 @@
 \ vim: set syntax=forth:
-\ This file contain the kernel of jsForth, it is everthing that was missing into
-\ the inner core
+\ This file contain the kernel of jsForth, it is everthing that was missing into the inner core
+
+
+\ REALLY INNER CORE
+: >CFA 3 + ;
+: >DFA 4 + ;
+
+: HIDE WORD FIND HIDDEN ;
 
 : NL 10 ;
 : BL 32 ;
@@ -596,7 +602,6 @@
   >DFA        ( s e )
   BEGIN
     DUP @
-    jsS
     ,
   
     1+ 2DUP =

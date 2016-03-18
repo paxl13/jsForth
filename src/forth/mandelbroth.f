@@ -262,7 +262,6 @@
     Zoom Y1 + Y1
     Zoom X1 + X1
     nIter
-    jsS
     DROP
     tDRAW
 

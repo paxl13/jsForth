@@ -25,12 +25,12 @@ export default function (lOut, cOut) {
   var _inputBuffer = [];
   var _currentState = RUNNING;
 
-  for (var i = 0; i < MEMORYSIZE; i++) {
-    _mem.push(null);
-  }
-
   var LATEST = 0;
   var HERE = 0;
+
+  for (let i = 0; i < MEMORYSIZE; i++) {
+    _mem.push(null);
+  }
 
   function NEXT() {
     _ip = _ip + 1;
@@ -47,11 +47,11 @@ export default function (lOut, cOut) {
     NEXT();
   }
 
-  // TODO: confirm if used
-  //  function EXIT() {
-  //    _ip = _retStack.pop();
-  //    NEXT();
-  //  }
+  function _COMMAjs(pAddr) {
+    var here = _mem[hereAddr];
+    _mem[here++] = pAddr;
+    _mem[hereAddr] = here;
+  }
 
   function getTOS() {
     return _stack[_stack.length - 1];
@@ -69,11 +69,6 @@ export default function (lOut, cOut) {
 
     return _inputBuffer.shift();
   }
-
-  // TODO: confimed if unused
-  //  var doCode = function (bodyPtr) {
-  //    _mem[bodyPtr]();
-  //  };
 
   // LINK,
   // FLAG,
@@ -93,13 +88,10 @@ export default function (lOut, cOut) {
     } else {
       // DO RESOLVE WITH NAMES
       var words = body.split(' ');
-      words.forEach((val) => {
-        if (isNaN(val)) {
-          _mem[HERE++] = _words[val];
-        } else {
-          _mem[HERE++] = parseInt(val);
-        }
-      });
+
+      for (let val of words) {
+        _mem[HERE++] = isNaN(val) ? _words[val] : parseInt(val)
+      }
     }
   }
 
@@ -129,32 +121,14 @@ export default function (lOut, cOut) {
         _stack.push(varAddr);
         NEXT();
       };
-
-      // TODO: Confirm if this has any use... was here before
-      // fct.name = codeName;
     }());
 
-    createDictionaryEntry(LATEST,
-        name,
-        flags,
-        fct);
+    createDictionaryEntry(LATEST, name, flags, fct);
 
     HERE++; // generate space for the variable !
     LATEST = newLatest;
-
     return varAddr;
   }
-
-  // TODO: confirm usage / inuage
-  // function defconst (name, flags, value) {
-  //    var newLatest = new DictionaryEntry(LATEST,
-  //        name,
-  //        doCode,
-  //        flags,
-  //        function() {
-  //        _stack.push(value);
-  //        });
-  //  }
 
   defvar('DUMMY', 'DUMMY', 0, 0);
 
@@ -164,10 +138,10 @@ export default function (lOut, cOut) {
   });
 
   // Variables
-  var varHere = defvar('HERE', 'HERE', 0, 0);
-  var varLatest = defvar('LATEST', 'LATEST', 0, 0);
-  var varState = defvar('STATE', 'STATE', 0, 0);
-  var varBase = defvar('BASE', 'BASE', 0, 10);
+  var hereAddr = defvar('HERE', 'HERE', 0, 0);
+  var latestAddr = defvar('LATEST', 'LATEST', 0, 0);
+  var stateAddr = defvar('STATE', 'STATE', 0, 0);
+  var baseAddr = defvar('BASE', 'BASE', 0, 10);
 
   // Stack operations
   defcode('DUP', 'DUP', 0, function DUP() { _stack.push(getTOS()); NEXT();});
@@ -416,12 +390,12 @@ export default function (lOut, cOut) {
   var str = '';
   var REALWORD = Symbol();
   var COMMENT = Symbol();
+
   var wordState = REALWORD;
   function _WORD() {
     let keyCode;
     do {
       keyCode = getInputData();
-      //            console.log('keycode:', keyCode);
       if (keyCode === null) {
         return null;
       }
@@ -443,7 +417,6 @@ export default function (lOut, cOut) {
 
       str = str + s;
       str = str.trim();
-      //            console.log(str);
     }
     while ((str === '') || (keyCode !== 32 && keyCode !== 10 && keyCode !== 13));
 
@@ -458,16 +431,16 @@ export default function (lOut, cOut) {
     NEXT();
   });
   defcode('NUMBER', 'NUMBER', 0, function NUMBER() {
-    var base = _mem[varBase];
+    var base = _mem[baseAddr];
     var TOS = _stack.pop();
     var n = parseInt(TOS, base);
     _stack.push(n);
     NEXT();
-  });//}}}
+  });
 
   // COMPILATION
   function _FIND() {
-    var c = _mem[varLatest];
+    var c = _mem[latestAddr];
     var n = _stack.pop();
     do {
       var nToCompare = _mem[c + 2];
@@ -486,25 +459,25 @@ export default function (lOut, cOut) {
   });
 
   defcode('CREATE', 'CREATE', 0, function CREATE() {
-    var latest = _mem[varLatest];
-    var here = _mem[varHere];
+    var latest = _mem[latestAddr];
+    var here = _mem[hereAddr];
 
     var name = _stack.pop();
 
-    _mem[varLatest] = here; // update LATEST with the word we currently create
+    _mem[latestAddr] = here; // update LATEST with the word we currently create
     _mem[here++] = latest;            // LINK
     _mem[here++] = 0;                 // flag
     _mem[here++] = name;             // flag
 
-    _mem[varHere] = here; // update here with the new value ready for comma.
+    _mem[hereAddr] = here; // update here with the new value ready for comma.
     NEXT();
   });
 
   defcode(',', 'COMMA', 0, function COMMA() {
     var TOS = _stack.pop();
 
-    var here = _mem[varHere];
-    _mem[varHere]++;
+    var here = _mem[hereAddr];
+    _mem[hereAddr]++;
 
     _mem[here] = TOS;
     NEXT();
@@ -531,7 +504,7 @@ export default function (lOut, cOut) {
 
   // Words flags Alteration
   defcode('IMMEDIATE', 'IMMEDIATE', F_IMMED, function() {
-    var latest = _mem[varLatest];
+    var latest = _mem[latestAddr];
     _mem[latest + 1] ^= F_IMMED;
     NEXT();
   });
@@ -554,12 +527,6 @@ export default function (lOut, cOut) {
     NEXT();
   });
 
-  function _COMMAjs(pAddr) {
-    var here = _mem[varHere];
-    _mem[here++] = pAddr;
-    _mem[varHere] = here;
-  }
-
   defcode('INTERPRET', 'INTERPRET', 0, function INTERPRET() {
     if (_WORD() === null) {
       return;
@@ -569,7 +536,7 @@ export default function (lOut, cOut) {
 
     _FIND();
 
-    var isCompiling = _mem[varState];
+    var isCompiling = _mem[stateAddr];
     var wAddr = _stack.pop();
 
     if (wAddr !== 0) {
@@ -583,7 +550,7 @@ export default function (lOut, cOut) {
         return;
       }
     } else {
-      var base = _mem[varBase];
+      var base = _mem[baseAddr];
       var isFloat = word[word.length - 1] === 'f';
 
       var number;
@@ -626,8 +593,8 @@ export default function (lOut, cOut) {
   });
 
   defcode('DOCOL!', 'DOCOLSTORE', 0, function DOCOLSTORE() {
-    var here = _mem[varHere];
-    _mem[varHere]++;
+    var here = _mem[hereAddr];
+    _mem[hereAddr]++;
     _mem[here] = DOCOL;
     NEXT();
   });
@@ -660,8 +627,6 @@ export default function (lOut, cOut) {
     NEXT();
   });
 
-  defword('>CFA', 'TCFA', 0, 'LIT 3 ADD EXIT');
-  defword('>DFA', 'TDFA', 0,  'LIT 4 ADD EXIT');
   defword('[', 'LSBRACKET', F_IMMED, 'LIT 0 STATE STORE EXIT');
   defword(']', 'RSBRACKET', 0, 'LIT 1 STATE STORE EXIT');
   defword(':', 'COLON', 0, 'WORD CREATE DOCOLSTORE LATEST FETCH HIDDEN RSBRACKET EXIT');
@@ -673,13 +638,12 @@ export default function (lOut, cOut) {
   defword('F_IMMED', 'F_IMMED', 0, 'LIT 2 EXIT');
   defword('F_HIDDEN', 'F_HIDDEN', 0, 'LIT 1 EXIT');
 
-  defword('MEMORY_SIZE', 'MEMORY_SIZE', 0, 'LIT ' + MEMORYSIZE + ' EXIT');
+  defword('MEMORY_SIZE', 'MEMORY_SIZE', 0, `LIT ${MEMORYSIZE} EXIT`);
   defword('QUIT', 'QUIT', 0, 'INTERPRET BRANCH -2');
 
   // COLD BOOT
-  //
-  _mem[varHere] = HERE;
-  _mem[varLatest] = LATEST;
+  _mem[hereAddr] = HERE;
+  _mem[latestAddr] = LATEST;
 
   HERE = undefined;
   LATEST = undefined;
@@ -687,7 +651,6 @@ export default function (lOut, cOut) {
   self.pushIntoInputBuffer = function(input) {
     var len = input.length;
     for (var i = 0; i < len; i++) {
-      //            console.log('new input');
       _inputBuffer.push(input.charCodeAt(i));
     }
 

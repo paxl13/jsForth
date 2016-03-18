@@ -21,13 +21,14 @@ gulp.task('inject', ['copyJS'], () => {
   let forthInjector = transform(() => {
     return map((data, cb) => {
       let content = data.toString('utf8');
-      let re = /fInject:(.*)/g
+      let re = /fInject:(.*),(.*)/g
       let result;
 
       while((result = re.exec(content)) != null) {
         let filename = result[1];
+        let output = result[2];
 
-        var toInsert = `parse(\`${fs.readFileSync(filename).toString().replace(/\\/g, '\\\\')}\`);`;
+        var toInsert = `parse(\`${fs.readFileSync(filename).toString().replace(/\\/g, '\\\\')}\`, ${output});`;
         content = content + toInsert;
       }
       cb(null, new Buffer(content));
