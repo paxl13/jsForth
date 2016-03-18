@@ -1,5 +1,7 @@
 'use strict';
 
+import * as es6 from './es6Helpers';
+
 export default function (lOut, cOut) {
   var self = this;
   var printLine = lOut;
@@ -432,7 +434,6 @@ export default function (lOut, cOut) {
     NEXT();
   });
 
-
   defcode('WORD', 'WORD', 0, function WORD() {
     if (_WORD() === null) {
       return;
@@ -632,7 +633,6 @@ export default function (lOut, cOut) {
   defword(']', 'RSBRACKET', 0, 'LIT 1 STATE STORE EXIT');
   defword(':', 'COLON', 0, 'WORD CREATE DOCOLSTORE LATEST FETCH HIDDEN RSBRACKET EXIT');
   defword(';', 'SEMICOLON', F_IMMED, 'LIT EXIT COMMA LATEST FETCH HIDDEN LSBRACKET EXIT');
-  defword('HIDE', 'HIDE', 0, 'WORD FIND HIDDEN EXIT');
 
   // CORE CONSTANT
   defword('CORE_VERSION', 'CORE_VERSION', 0, 'LIT 3 EXIT');
@@ -649,11 +649,9 @@ export default function (lOut, cOut) {
   HERE = undefined;
   LATEST = undefined;
 
+  const getCharCode = es6.map(e => e.charCodeAt(0));
   self.pushIntoInputBuffer = function(input) {
-    var len = input.length;
-    for (var i = 0; i < len; i++) {
-      _inputBuffer.push(input.charCodeAt(i));
-    }
+    _inputBuffer.push(...getCharCode(input));
 
     _currentState = RUNNING;
     run();

@@ -8,7 +8,7 @@ let consoleInput = new ConsoleWrapper();
 let jsForth = new JsForth(consoleInput.printString, consoleInput.printChar);
 consoleInput.keypressFct = jsForth.pushIntoInputBuffer;
 
-function parse(s, output) {
+function parse(s, output) { // jshint ignore:line
   console.time('compiling');
   consoleInput.enableOutput = output;
   jsForth.pushIntoInputBuffer(s);
