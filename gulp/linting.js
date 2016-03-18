@@ -5,7 +5,7 @@ let c = require('./conf');
 let $ = require('gulp-load-plugins')();
 
 gulp.task('linting', () => {
-  return gulp.src([c.pathsGlobs.jsFiles, `!${c.jsForth}`])
+  return gulp.src([c.pathsGlobs.jsFiles])
     .pipe($.jshint())
     .pipe($.jscs())
     .pipe($.jscsStylish.combineWithHintResults()) // combine with jshint results
