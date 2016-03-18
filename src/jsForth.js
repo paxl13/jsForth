@@ -11,6 +11,9 @@ export default function (lOut, cOut) {
   var RUNNING = Symbol();
   var IOLOCKED = Symbol();
 
+  var REALWORD = Symbol();
+  var COMMENT = Symbol();
+
   var _stack = [];
   var _retStack = [];
 
@@ -70,7 +73,14 @@ export default function (lOut, cOut) {
     return _inputBuffer.shift();
   }
 
-  // LINK,
+  function run() {
+    while (_currentState === RUNNING) {
+      var op = _mem[_current];
+      op();
+    }
+  }
+
+  // LINK to prev word.
   // FLAG,
   // NAME,
   // BODY -> can be function pointer 1 cell
@@ -90,7 +100,7 @@ export default function (lOut, cOut) {
       var words = body.split(' ');
 
       for (let val of words) {
-        _mem[HERE++] = isNaN(val) ? _words[val] : parseInt(val)
+        _mem[HERE++] = isNaN(val) ? _words[val] : parseInt(val);
       }
     }
   }
@@ -128,6 +138,41 @@ export default function (lOut, cOut) {
     HERE++; // generate space for the variable !
     LATEST = newLatest;
     return varAddr;
+  }
+
+  var wordBuffer = '';
+  var wordState = REALWORD;
+  function _WORD() {
+    let keyCode;
+    do {
+      keyCode = getInputData();
+      if (keyCode === null) {
+        return null;
+      }
+
+      var s = String.fromCharCode(keyCode);
+      printChar(keyCode);
+
+      if (wordState === COMMENT) {
+        if (keyCode === 10) {
+          wordState = REALWORD;
+        }
+        continue;
+      }
+
+      if (s[0] === '\\') {
+        wordState = COMMENT;
+        continue;
+      }
+
+      wordBuffer = wordBuffer + s;
+      wordBuffer = wordBuffer.trim();
+    }
+    while ((wordBuffer === '') || (keyCode !== 32 && keyCode !== 10 && keyCode !== 13));
+
+    _stack.push(wordBuffer.trim());
+    wordBuffer = '';
+    return true;
   }
 
   defvar('DUMMY', 'DUMMY', 0, 0);
@@ -387,43 +432,7 @@ export default function (lOut, cOut) {
     NEXT();
   });
 
-  var str = '';
-  var REALWORD = Symbol();
-  var COMMENT = Symbol();
 
-  var wordState = REALWORD;
-  function _WORD() {
-    let keyCode;
-    do {
-      keyCode = getInputData();
-      if (keyCode === null) {
-        return null;
-      }
-
-      var s = String.fromCharCode(keyCode);
-      printChar(keyCode);
-
-      if (wordState === COMMENT) {
-        if (keyCode === 10) {
-          wordState = REALWORD;
-        }
-        continue;
-      }
-
-      if (s[0] === '\\') {
-        wordState = COMMENT;
-        continue;
-      }
-
-      str = str + s;
-      str = str.trim();
-    }
-    while ((str === '') || (keyCode !== 32 && keyCode !== 10 && keyCode !== 13));
-
-    _stack.push(str.trim());
-    str = '';
-    return true;
-  }
   defcode('WORD', 'WORD', 0, function WORD() {
     if (_WORD() === null) {
       return;
@@ -609,14 +618,6 @@ export default function (lOut, cOut) {
     NEXT();
   });
 
-  // TODO: Re-add when useful
-  //  defcode('jsEXECUTE', 'jsEXECUTE', F_IMMED, function COMPILE() {
-  //    var code = _stack.pop();
-  //    debugger;
-  //    eval(code)
-  //    NEXT();
-  //  });
-
   defcode('jsS', 'jsS', 0, function DEBUGGER() {
     console.log(_stack);
     NEXT();
@@ -655,16 +656,13 @@ export default function (lOut, cOut) {
     }
 
     _currentState = RUNNING;
-    self.run();
+    run();
   };
 
-  self.run = function() {
-    while (_currentState === RUNNING) {
-      var op = _mem[_current];
-      op();
-    }
-  };
+  function coldBoot() {
+    _current = _words.QUIT;
+    run();
+  }
 
-  _current = _words.QUIT;
-  self.run();
+  coldBoot();
 }
