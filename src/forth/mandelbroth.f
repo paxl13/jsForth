@@ -313,6 +313,6 @@
   ." EXIT "
 ;
 
-\ 2 -2 2 -2 
-\ tDRAW
-kLOOP
+2 -2 2 -2 
+tDRAW
+\ kLOOP
