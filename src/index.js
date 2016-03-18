@@ -14,8 +14,5 @@ function parse(s) {
   jsForth.pushIntoInputBuffer(s);
 }
 
-// files: kf
-// end
-
-// files: f
-// end
+// fInject:./src/forth/kernel.kf
+// fInject:./src/forth/mandelbroth.f

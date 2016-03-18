@@ -4,6 +4,10 @@ let gulp = require('gulp');
 let sh = require('shelljs');
 let c = require('./conf');
 let $ = require('gulp-load-plugins')();
+let transform = require('vinyl-transform');
+let map = require('map-stream');
+let fs = require('fs');
+
 
 gulp.task('build', ['babel']);
 
@@ -14,16 +18,24 @@ gulp.task('copyJS', ['clean'], () => {
 });
 
 gulp.task('inject', ['copyJS'], () => {
-  return gulp.src('./build/index.js')
-    .pipe($.inject(gulp.src([c.pathsGlobs.kFFiles, c.pathsGlobs.fFiles]), {
-      starttag: '// files: {{ext}}',
-      endtag: '// end',
-      transform: (filename, file) => {
-        let content = file.contents.toString('utf8');
-        content = content.replace(/\\/g, '\\\\');
-        return `parse(\`${content}\`);`;
+  let forthInjector = transform(() => {
+    return map((data, cb) => {
+      let content = data.toString('utf8');
+      let re = /fInject:(.*)/g
+      let result;
+
+      while((result = re.exec(content)) != null) {
+        let filename = result[1];
+
+        var toInsert = `parse(\`${fs.readFileSync(filename).toString().replace(/\\/g, '\\\\')}\`);`;
+        content = content + toInsert;
       }
-    }))
+      cb(null, new Buffer(content));
+    });
+  });
+
+  return gulp.src('./build/index.js')
+    .pipe(forthInjector)
     .pipe(gulp.dest('./build'));
 });
 
