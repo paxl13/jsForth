@@ -5,15 +5,18 @@ Object.defineProperty(exports, "__esModule", {
 });
 
 exports.default = function () {
-  var self = this;
+  let self = this;
 
   self.printString = printString;
   self.printChar = printChar;
+  self.enableOutput = true;
 
   self.keypressFct = undefined;
 
   function printString(s) {
-    process.stdout.write(s);
+    if (self.enableOutput) {
+      process.stdout.write(s);
+    }
   }
 
   function printChar(c) {
@@ -21,7 +24,10 @@ exports.default = function () {
     if (c === 13) {
       process.stdout.write('\n');
     }
-    process.stdout.write(s);
+
+    if (self.enableOutput) {
+      process.stdout.write(s);
+    }
   }
 
   function handleKeypress(ch, key) {
