@@ -20,7 +20,7 @@ var _retStack = [];
 
 var MEMORYSIZE = 64000;
 
-var _words = {};
+var _words = new Map();
 var _mem = [];
 
 var _ip = null;
@@ -86,8 +86,8 @@ function run() {
 function pushToHERE() {
   let notUndefined = es6.STATIC(pushToHERE, 'notUndefined', () => es6.filter(a => a !== undefined));
 
-  for(let arg of notUndefined(arguments)) {
-    _mem[HERE++] = arg
+  for (let arg of notUndefined(arguments)) {
+    _mem[HERE++] = arg;
   }
 }
 
@@ -97,8 +97,9 @@ function pushToHERE() {
 // BODY -> can be function pointer 1 cell
 //      -> or multiple cell for words.
 function createDictionaryEntry(name, flags, body, codeword) {
-  let resolveWords = es6.STATIC(createDictionaryEntry, 'resolveWords', () => es6.map(w => isNaN(w) ? _words[w] : parseInt(w)));
+  let resolveWords = es6.STATIC(createDictionaryEntry, 'resolveWords', () => es6.map(w => isNaN(w) ? _words.get(w) : parseInt(w)));
   let oldHere = HERE;
+  _words.set(name, HERE + 3);
 
   pushToHERE(LATEST, flags, name, codeword);
   pushToHERE(...(typeof(body) === 'function' ? [body] : [...resolveWords(body.split(' '))]));
@@ -106,19 +107,15 @@ function createDictionaryEntry(name, flags, body, codeword) {
   LATEST = oldHere;
 }
 
-function defcode(name, codeName, flags, fct) {
-  _words[codeName] = HERE + 3;
+function defcode(name, flags, fct) {
   createDictionaryEntry(name, flags, fct);
 }
 
-function defword(name, codeName, flags, words) {
-  _words[codeName] = HERE + 3;
+function defword(name, flags, words) {
   createDictionaryEntry(name, flags, words, DOCOL);
 }
 
-function defvar(name, codeName, flags, defval) {
-  _words[codeName] = HERE + 3;
-
+function defvar(name, flags, defval) {
   var varAddr = HERE + 4;
   var fct = (function() {
     _mem[varAddr] = defval;
@@ -169,31 +166,31 @@ function _WORD() {
   return true;
 }
 
-defvar('DUMMY', 'DUMMY', 0, 0);
+defvar('DUMMY', 0, 0);
 
-defcode('EXIT', 'EXIT', 0, function EXIT() {
+defcode('EXIT', 0, function EXIT() {
   _ip = _retStack.pop();
   NEXT();
 });
 
 // Variables
-var hereAddr = defvar('HERE', 'HERE', 0, 0);
-var latestAddr = defvar('LATEST', 'LATEST', 0, 0);
-var stateAddr = defvar('STATE', 'STATE', 0, 0);
-var baseAddr = defvar('BASE', 'BASE', 0, 10);
+var hereAddr = defvar('HERE', 0, 0);
+var latestAddr = defvar('LATEST', 0, 0);
+var stateAddr = defvar('STATE', 0, 0);
+var baseAddr = defvar('BASE', 0, 10);
 
 // Stack operations
-defcode('DUP', 'DUP', 0, function DUP() { _stack.push(getTOS()); NEXT();});
-defcode('DROP', 'DROP', 0, function DROP() { _stack.pop(); NEXT();});
-defcode('SWAP', 'SWAP', 0, function SWAP() {
+defcode('DUP', 0, function DUP() { _stack.push(getTOS()); NEXT();});
+defcode('DROP', 0, function DROP() { _stack.pop(); NEXT();});
+defcode('SWAP', 0, function SWAP() {
   var TOS = _stack.pop();
   var NOS = _stack.pop();
   _stack.push(TOS);
   _stack.push(NOS);
   NEXT();
 });
-defcode('OVER', 'OVER', 0, function OVER() { _stack.push(getNOS()); NEXT();});
-defcode('ROT', 'ROT', 0, function ROT() {
+defcode('OVER', 0, function OVER() { _stack.push(getNOS()); NEXT();});
+defcode('ROT', 0, function ROT() {
   var a = _stack.pop();
   var b = _stack.pop();
   var c = _stack.pop();
@@ -203,7 +200,7 @@ defcode('ROT', 'ROT', 0, function ROT() {
   NEXT();
 });
 
-defcode('-ROT', 'NROT', 0, function ROT() {
+defcode('-ROT', 0, function ROT() {
   var a = _stack.pop();
   var b = _stack.pop();
   var c = _stack.pop();
@@ -213,22 +210,22 @@ defcode('-ROT', 'NROT', 0, function ROT() {
   NEXT();
 });
 
-defcode('2DROP', 'TWODROP', 0, function TWODROP() { _stack.pop(); _stack.pop(); NEXT();});
-defcode('2DUP', 'TWODUP', 0, function TWODUP() {
+defcode('2DROP', 0, function TWODROP() { _stack.pop(); _stack.pop(); NEXT();});
+defcode('2DUP', 0, function TWODUP() {
   var TOS = getTOS();
   var NOS = getNOS();
   _stack.push(NOS);
   _stack.push(TOS);
   NEXT();
 });
-defcode('2SWAP', 'TWOSWAP', 0, function TWOSTAP() {
+defcode('2SWAP', 0, function TWOSTAP() {
   var a = _stack.pop(); var b = _stack.pop();
   var c = _stack.pop(); var d = _stack.pop();
   _stack.push(c); _stack.push(d);
   _stack.push(a); _stack.push(b);
   NEXT();
 });
-defcode('?DUP', 'ZDUP', 0, function ZDUP() {
+defcode('?DUP', 0, function ZDUP() {
   var TOS = getTOS();
   if (TOS !== 0) {
     _stack.push(TOS);
@@ -237,132 +234,132 @@ defcode('?DUP', 'ZDUP', 0, function ZDUP() {
 });
 
 // Math operations
-defcode('1+', 'INCR', 0, function INCR() { _stack[_stack.length - 1]++; NEXT();});
-defcode('1-', 'DECR', 0, function DECR() { _stack[_stack.length - 1]--; NEXT();});
-defcode('+', 'ADD', 0, function ADD() {
+defcode('1+', 0, function INCR() { _stack[_stack.length - 1]++; NEXT();});
+defcode('1-', 0, function DECR() { _stack[_stack.length - 1]--; NEXT();});
+defcode('+', 0, function ADD() {
   var TOS = _stack.pop(); var NOS = _stack.pop();
   _stack.push(TOS + NOS);
   NEXT();
 });
-defcode('-', 'SUB', 0, function SUB() {
+defcode('-', 0, function SUB() {
   var TOS = _stack.pop(); var NOS = _stack.pop();
   _stack.push(NOS - TOS);
   NEXT();
 });
-defcode('*', 'MUL', 0, function MUL() {
+defcode('*', 0, function MUL() {
   var TOS = _stack.pop(); var NOS = _stack.pop();
   _stack.push(NOS * TOS);
   NEXT();
 });
-defcode('/MOD', 'MODDIV', 0, function MODDIV() {
+defcode('/MOD', 0, function MODDIV() {
   var TOS = _stack.pop(); var NOS = _stack.pop();
   _stack.push(NOS % TOS);
   _stack.push(Math.floor(NOS / TOS));
   NEXT();
 });
-defcode('/', 'DIV', 0, function DIV() {
+defcode('/', 0, function DIV() {
   var TOS = _stack.pop(); var NOS = _stack.pop();
   _stack.push(NOS / TOS);
   NEXT();
 });
 
-defcode('FLOOR', 'FLOOR', 0, function DIV() {
+defcode('FLOOR', 0, function DIV() {
   var TOS = _stack.pop();
   _stack.push(Math.floor(TOS));
   NEXT();
 });
 
 // Comparison Operators
-defcode('=', 'EQ', 0, function EQ() {
+defcode('=', 0, function EQ() {
   var TOS = _stack.pop(); var NOS = _stack.pop();
   _stack.push((TOS === NOS) ? 1 : 0);
   NEXT();
 });
-defcode('<>', 'NEQ', 0, function NEQ() {
+defcode('<>', 0, function NEQ() {
   var TOS = _stack.pop(); var NOS = _stack.pop();
   _stack.push((TOS !== NOS) ? 1 : 0);
   NEXT();
 });
-defcode('<', 'LT', 0, function LT() {
+defcode('<', 0, function LT() {
   var TOS = _stack.pop(); var NOS = _stack.pop();
   _stack.push((NOS < TOS) ? 1 : 0);
   NEXT();
 });
-defcode('>', 'GT', 0, function GT() {
+defcode('>', 0, function GT() {
   var TOS = _stack.pop(); var NOS = _stack.pop();
   _stack.push((NOS > TOS) ? 1 : 0);
   NEXT();
 });
-defcode('<=', 'LTE', 0, function LTE() {
+defcode('<=', 0, function LTE() {
   var TOS = _stack.pop(); var NOS = _stack.pop();
   _stack.push((NOS <= TOS) ? 1 : 0);
   NEXT();
 });
-defcode('>=', 'GTE', 0, function GTE() {
+defcode('>=', 0, function GTE() {
   var TOS = _stack.pop(); var NOS = _stack.pop();
   _stack.push((NOS >= TOS) ? 1 : 0);
   NEXT();
 });
-defcode('0=', 'ZEQ', 0, function ZEQ() {
+defcode('0=', 0, function ZEQ() {
   var TOS = _stack.pop();
   _stack.push((TOS === 0) ? 1 : 0);
   NEXT();
 });
-defcode('0<>', 'ZNEQ', 0, function ZNEQ() {
+defcode('0<>', 0, function ZNEQ() {
   var TOS = _stack.pop();
   _stack.push((TOS !== 0) ? 1 : 0);
   NEXT();
 });
-defcode('0<', 'ZLT', 0, function ZLT() {
+defcode('0<', 0, function ZLT() {
   var TOS = _stack.pop();
   _stack.push((TOS < 0) ? 1 : 0);
   NEXT();
 });
-defcode('0>', 'ZGT', 0, function ZGT() {
+defcode('0>', 0, function ZGT() {
   var TOS = _stack.pop();
   _stack.push((TOS > 0) ? 1 : 0);
   NEXT();
 });
-defcode('0<=', 'ZLTE', 0, function ZLTE() {
+defcode('0<=', 0, function ZLTE() {
   var TOS = _stack.pop();
   _stack.push((TOS <= 0) ? 1 : 0);
   NEXT();
 });
-defcode('0>=', 'ZGTE', 0, function ZGTE() {
+defcode('0>=', 0, function ZGTE() {
   var TOS = _stack.pop();
   _stack.push((TOS >= 0) ? 1 : 0);
   NEXT();
 });
 
 // Binary Operators
-defcode('AND', 'AND', 0, function AND() {
+defcode('AND', 0, function AND() {
   var TOS = _stack.pop(); var NOS = _stack.pop();
   _stack.push(TOS & NOS);
   NEXT();
 });
-defcode('OR', 'OR', 0, function OR() {
+defcode('OR', 0, function OR() {
   var TOS = _stack.pop(); var NOS = _stack.pop();
   _stack.push(TOS | NOS);
   NEXT();
 });
-defcode('XOR', 'XOR', 0, function XOR() {
+defcode('XOR', 0, function XOR() {
   var TOS = _stack.pop(); var NOS = _stack.pop();
   _stack.push(TOS ^ NOS);
   NEXT();
 });
-defcode('INVERT', 'INVERT', 0, function INVERT() {
+defcode('INVERT', 0, function INVERT() {
   var TOS = _stack.pop();
   _stack.push(!TOS);
   NEXT();
 });
 
 // Branch Operators
-defcode('BRANCH', 'BRANCH', 0, function BRANCH() {
+defcode('BRANCH', 0, function BRANCH() {
   var val = _mem[++_ip];
   _ip += parseInt(val) - 1; // to compensate for NEXT
   NEXT();
 });
-defcode('0BRANCH', 'ZBRANCH', 0, function() {
+defcode('0BRANCH', 0, function() {
   var val = _mem[++_ip];
   var TOS = _stack.pop();
   if (TOS === 0) {
@@ -372,52 +369,52 @@ defcode('0BRANCH', 'ZBRANCH', 0, function() {
 });
 
 // Memory Operations
-defcode('!', 'STORE', 0, function STORE() {
+defcode('!', 0, function STORE() {
   var TOS = _stack.pop();
   var NOS = _stack.pop();
   _mem[TOS] = NOS;
   NEXT();
 });
-defcode('+!', 'ADDSTORE', 0, function ADDSTORE() {
+defcode('+!', 0, function ADDSTORE() {
   var TOS = _stack.pop();
   var NOS = _stack.pop();
   _mem[TOS] = _mem[TOS] + NOS;
   NEXT();
 });
-defcode('@', 'FETCH', 0, function FETCH() {
+defcode('@', 0, function FETCH() {
   var TOS = _stack.pop();
   _stack.push(_mem[TOS]);
   NEXT();
 });
-defcode('DEPTH', 'DEPTH', 0, function S0() {
+defcode('DEPTH', 0, function S0() {
   _stack.push(_stack.length - 1);
   NEXT();
 });
-defcode('DSP@', 'STACK0', 0, function DATASTACKFETCH() {
+defcode('DSP@', 0, function DATASTACKFETCH() {
   var TOS = _stack.pop();
   _stack.push(_stack[TOS]);
   NEXT();
 });
 
 // Return stack operators
-defcode('>R', 'TRSK', 0, function TRSK() { _retStack.push(_stack.pop()); NEXT();});
-defcode('R>', 'FRSK', 0, function FRSK() { _stack.push(_retStack.pop()); NEXT();});
-defcode('RDROP', 'RDROP', 0, function() { _retStack.pop(); NEXT();});
+defcode('>R', 0, function TRSK() { _retStack.push(_stack.pop()); NEXT();});
+defcode('R>', 0, function FRSK() { _stack.push(_retStack.pop()); NEXT();});
+defcode('RDROP', 0, function() { _retStack.pop(); NEXT();});
 
 // INPUT / OUTPUT Operators
-defcode('EMIT', 'EMIT', 0, function EMIT() {
+defcode('EMIT', 0, function EMIT() {
   var c = _stack.pop();
   printChar(c);
   NEXT();
 });
-defcode('TELL', 'TELL', 0, function TELL() {
+defcode('TELL', 0, function TELL() {
   var str = _stack.pop();
   for (var i = 0; i < str.length; i++) {
     printChar(str.charCodeAt(i));
   }
   NEXT();
 });
-defcode('KEY', 'KEY', 0, function KEY() {
+defcode('KEY', 0, function KEY() {
   var keyCode = getInputData();
   if (keyCode === null) {
     return;       // No data yet, waiting.
@@ -426,13 +423,13 @@ defcode('KEY', 'KEY', 0, function KEY() {
   NEXT();
 });
 
-defcode('WORD', 'WORD', 0, function WORD() {
+defcode('WORD', 0, function WORD() {
   if (_WORD() === null) {
     return;
   }
   NEXT();
 });
-defcode('NUMBER', 'NUMBER', 0, function NUMBER() {
+defcode('NUMBER', 0, function NUMBER() {
   var base = _mem[baseAddr];
   var TOS = _stack.pop();
   var n = parseInt(TOS, base);
@@ -455,12 +452,12 @@ function _FIND() {
   _stack.push(c);
 }
 
-defcode('FIND', 'FIND', 0, function FIND() {
+defcode('FIND', 0, function FIND() {
   _FIND();
   NEXT();
 });
 
-defcode('CREATE', 'CREATE', 0, function CREATE() {
+defcode('CREATE', 0, function CREATE() {
   var latest = _mem[latestAddr];
   var here = _mem[hereAddr];
 
@@ -475,7 +472,7 @@ defcode('CREATE', 'CREATE', 0, function CREATE() {
   NEXT();
 });
 
-defcode(',', 'COMMA', 0, function COMMA() {
+defcode(',', 0, function COMMA() {
   var TOS = _stack.pop();
 
   var here = _mem[hereAddr];
@@ -485,19 +482,19 @@ defcode(',', 'COMMA', 0, function COMMA() {
   NEXT();
 });
 
-defcode('\'', 'TICK', 0, function TICK() {
+defcode('\'', 0, function TICK() {
   var val = _mem[++_ip];
   _stack.push(val);
   NEXT();
 });
 
-defcode('LIT', 'LIT', 0, function LIT() {
+defcode('LIT', 0, function LIT() {
   _ip++;
   var val = _mem[_ip];
   _stack.push(val);//parseInt(val));
   NEXT();
 });
-defcode('LITSTRING', 'LITSTRING', 0, function() {
+defcode('LITSTRING', 0, function() {
   _ip++;
   var val = _mem[_ip];
   _stack.push(val);       // Should be a string.
@@ -505,31 +502,31 @@ defcode('LITSTRING', 'LITSTRING', 0, function() {
 });
 
 // Words flags Alteration
-defcode('IMMEDIATE', 'IMMEDIATE', F_IMMED, function() {
+defcode('IMMEDIATE', F_IMMED, function() {
   var latest = _mem[latestAddr];
   _mem[latest + 1] ^= F_IMMED;
   NEXT();
 });
-defcode('HIDDEN', 'HIDDEN', 0, function HIDDEN() {
+defcode('HIDDEN', 0, function HIDDEN() {
   var TOS = _stack.pop();
   _mem[TOS + 1] ^= F_HIDDEN;
   NEXT();
 });
 
 // String Operators
-defcode('>STR', 'TOSTR', 0, function TOSTR() {
+defcode('>STR', 0, function TOSTR() {
   var TOS = _stack.pop();
   _stack.push(String.fromCharCode(TOS));
   NEXT();
 });
 
-defcode('?STR', 'ISSTR', 0, function ISSTR() {
+defcode('?STR', 0, function ISSTR() {
   var TOS = _stack.pop();
   _stack.push((typeof TOS === 'string') ? 1 : 0);
   NEXT();
 });
 
-defcode('INTERPRET', 'INTERPRET', 0, function INTERPRET() {
+defcode('INTERPRET', 0, function INTERPRET() {
   if (_WORD() === null) {
     return;
   }
@@ -572,14 +569,14 @@ defcode('INTERPRET', 'INTERPRET', 0, function INTERPRET() {
     if (!isCompiling) {
       _stack.push(number);
     } else {
-      _COMMAjs(_words.LIT);
+      _COMMAjs(_words.get('LIT'));
       _COMMAjs(number);
     }
   }
   NEXT();
 });
 
-defcode('CHAR', 'CHAR', 0, function CHAR() {
+defcode('CHAR', 0, function CHAR() {
   if (_WORD() === null) {
     return;
   }
@@ -589,50 +586,50 @@ defcode('CHAR', 'CHAR', 0, function CHAR() {
   _stack.push(c);
   NEXT();
 });
-defcode('EXECUTE', 'EXECUTE',  0, function() {
+defcode('EXECUTE',  0, function() {
   var TOS = _stack.pop();
   _EXECUTEjs(TOS);
 });
 
-defcode('DOCOL!', 'DOCOLSTORE', 0, function DOCOLSTORE() {
+defcode('DOCOL!', 0, function DOCOLSTORE() {
   var here = _mem[hereAddr];
   _mem[hereAddr]++;
   _mem[here] = DOCOL;
   NEXT();
 });
 
-defcode('BYE', 'BYE', 0, function BYE() {
+defcode('BYE', 0, function BYE() {
     console.log('BYE encountered, exiting cleanly');
     process.exit();
   });
 
-defcode('DEBUGGER', 'DEBUGGER', 0, function DEBUGGER() {
+defcode('DEBUGGER', 0, function DEBUGGER() {
   debugger; // jshint ignore:line
   NEXT();
 });
 
-defcode('jsS', 'jsS', 0, function DEBUGGER() {
+defcode('jsS', 0, function DEBUGGER() {
   console.log(_stack);
   NEXT();
 });
 
-defcode('EPOCH', 'EPOCH', 0, function EPOCH() {
+defcode('EPOCH', 0, function EPOCH() {
   _stack.push(new Date().getTime());
   NEXT();
 });
 
-defword('[', 'LSBRACKET', F_IMMED, 'LIT 0 STATE STORE EXIT');
-defword(']', 'RSBRACKET', 0, 'LIT 1 STATE STORE EXIT');
-defword(':', 'COLON', 0, 'WORD CREATE DOCOLSTORE LATEST FETCH HIDDEN RSBRACKET EXIT');
-defword(';', 'SEMICOLON', F_IMMED, 'LIT EXIT COMMA LATEST FETCH HIDDEN LSBRACKET EXIT');
+defword('[', F_IMMED, 'LIT 0 STATE ! EXIT');
+defword(']', 0, 'LIT 1 STATE ! EXIT');
+defword(':', 0, 'WORD CREATE DOCOL! LATEST @ HIDDEN ] EXIT');
+defword(';', F_IMMED, 'LIT EXIT , LATEST @ HIDDEN [ EXIT');
 
 // CORE CONSTANT
-defword('CORE_VERSION', 'CORE_VERSION', 0, 'LIT 3 EXIT');
-defword('F_IMMED', 'F_IMMED', 0, 'LIT 2 EXIT');
-defword('F_HIDDEN', 'F_HIDDEN', 0, 'LIT 1 EXIT');
+defword('CORE_VERSION', 0, 'LIT 3 EXIT');
+defword('F_IMMED', 0, 'LIT 2 EXIT');
+defword('F_HIDDEN', 0, 'LIT 1 EXIT');
 
-defword('MEMORY_SIZE', 'MEMORY_SIZE', 0, `LIT ${MEMORYSIZE} EXIT`);
-defword('QUIT', 'QUIT', 0, 'INTERPRET BRANCH -2');
+defword('MEMORY_SIZE', 0, `LIT ${MEMORYSIZE} EXIT`);
+defword('QUIT', 0, 'INTERPRET BRANCH -2');
 
 // COLD BOOT
 _mem[hereAddr] = HERE;
@@ -642,7 +639,7 @@ HERE = undefined;
 LATEST = undefined;
 
 function coldBoot() {
-  _current = _words.QUIT;
+  _current = _words.get('QUIT');
   run();
 }
 
