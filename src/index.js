@@ -20,6 +20,6 @@ function parse(s, output) { // jshint ignore:line
   console.timeEnd('compiling');
 }
 
-// fInject:./src/forth/kernel.f,true
+// fInject:./src/forth/kernel.f,false
 // fInject:./src/forth/console.f,true
 // fInject:./src/forth/mandelbroth.f,true

@@ -83,50 +83,43 @@ function run() {
   }
 }
 
+function pushToHERE() {
+  let notUndefined = es6.STATIC(pushToHERE, 'notUndefined', () => es6.filter(a => a !== undefined));
+
+  for(let arg of notUndefined(arguments)) {
+    _mem[HERE++] = arg
+  }
+}
+
 // LINK to prev word.
 // FLAG,
 // NAME,
 // BODY -> can be function pointer 1 cell
 //      -> or multiple cell for words.
-function createDictionaryEntry(link, name, flags, body, codeword) {
-  _mem[HERE++] = link;
-  _mem[HERE++] = flags;
-  _mem[HERE++] = name;
-  if (codeword !== undefined) {
-    _mem[HERE++] = codeword;
-  }
+function createDictionaryEntry(name, flags, body, codeword) {
+  let resolveWords = es6.STATIC(createDictionaryEntry, 'resolveWords', () => es6.map(w => isNaN(w) ? _words[w] : parseInt(w)));
+  let oldHere = HERE;
 
-  if (typeof(body) === 'function') {
-    _mem[HERE++] = body;
-  } else {
-    // DO RESOLVE WITH NAMES
-    var words = body.split(' ');
+  pushToHERE(LATEST, flags, name, codeword);
+  pushToHERE(...(typeof(body) === 'function' ? [body] : [...resolveWords(body.split(' '))]));
 
-    for (let val of words) {
-      _mem[HERE++] = isNaN(val) ? _words[val] : parseInt(val);
-    }
-  }
+  LATEST = oldHere;
 }
 
 function defcode(name, codeName, flags, fct) {
-  var newLatest = HERE;
   _words[codeName] = HERE + 3;
-  createDictionaryEntry(LATEST, name, flags, fct);
-  LATEST = newLatest;
+  createDictionaryEntry(name, flags, fct);
 }
 
 function defword(name, codeName, flags, words) {
-  var newLatest = HERE;
   _words[codeName] = HERE + 3;
-  createDictionaryEntry(LATEST, name, flags, words, DOCOL);
-  LATEST = newLatest;
+  createDictionaryEntry(name, flags, words, DOCOL);
 }
 
 function defvar(name, codeName, flags, defval) {
-  var newLatest = HERE;
   _words[codeName] = HERE + 3;
-  var varAddr = HERE + 4;
 
+  var varAddr = HERE + 4;
   var fct = (function() {
     _mem[varAddr] = defval;
 
@@ -136,10 +129,8 @@ function defvar(name, codeName, flags, defval) {
     };
   }());
 
-  createDictionaryEntry(LATEST, name, flags, fct);
-
+  createDictionaryEntry(name, flags, fct);
   HERE++; // generate space for the variable !
-  LATEST = newLatest;
   return varAddr;
 }
 
