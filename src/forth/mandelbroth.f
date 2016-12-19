@@ -315,3 +315,24 @@
 2 -2 2 -2 
 tDRAW
 \ kLOOP
+
+: LOOPADD
+  100000 0 DO
+  2 3 +
+  DROP
+  LOOP
+;
+  
+
+: ADDSPEED
+  EPOCH
+  LOOPADD
+  EPOCH
+  SWAP -
+  ." Time Elapsed " 
+  0 .R
+  ." ms"
+  .s
+;
+
+ADDSPEED

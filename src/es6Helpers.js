@@ -24,4 +24,4 @@ export function STATIC(obj, name, fct) {
   }
 
   return obj[name];
-};
+}

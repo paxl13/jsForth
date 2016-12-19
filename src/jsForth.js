@@ -16,6 +16,9 @@ var REALWORD = Symbol();
 var COMMENT = Symbol();
 
 var _stack = [];
+_stack.getTOS = getTOS;
+_stack.getNOS = getNOS;
+
 var _retStack = [];
 
 var MEMORYSIZE = 64000;
@@ -36,7 +39,17 @@ for (let i = 0; i < MEMORYSIZE; i++) {
   _mem.push(null);
 }
 
-function NEXT() {
+var core = {
+  'stack': _stack,
+  'retStack': _retStack,
+  'words': _words,
+  'mem': _mem,
+  'ip': _ip,
+  'current': _current
+}
+
+
+export function NEXT() {
   _ip = _ip + 1;
   _current = _mem[_ip];
 }
@@ -79,7 +92,8 @@ function run() {
 
   while (_currentState === RUNNING) {
     var op = _mem[_current];
-    op();
+    console.log(`executing ${op.name}, _current = ${_current}, _ip = ${_ip}, _stack = ${_stack}, _retStack = ${_retStack}`);
+    op(core);
   }
 }
 
@@ -107,7 +121,7 @@ function createDictionaryEntry(name, flags, body, codeword) {
   LATEST = oldHere;
 }
 
-function defcode(name, flags, fct) {
+export function defcode(name, flags, fct) {
   createDictionaryEntry(name, flags, fct);
 }
 
@@ -180,7 +194,12 @@ var stateAddr = defvar('STATE', 0, 0);
 var baseAddr = defvar('BASE', 0, 10);
 
 // Stack operations
-defcode('DUP', 0, function DUP() { _stack.push(getTOS()); NEXT();});
+defcode('DUP', 0, function DUP(c) { 
+  console.log(`core: ${c}`);
+  c.stack.push(c.stack.getTOS());
+//  _stack.push(getTOS()); 
+  NEXT();
+});
 defcode('DROP', 0, function DROP() { _stack.pop(); NEXT();});
 defcode('SWAP', 0, function SWAP() {
   var TOS = _stack.pop();
@@ -359,7 +378,7 @@ defcode('BRANCH', 0, function BRANCH() {
   _ip += parseInt(val) - 1; // to compensate for NEXT
   NEXT();
 });
-defcode('0BRANCH', 0, function() {
+defcode('0BRANCH', 0, function ZBRANCH() {
   var val = _mem[++_ip];
   var TOS = _stack.pop();
   if (TOS === 0) {
@@ -399,7 +418,7 @@ defcode('DSP@', 0, function DATASTACKFETCH() {
 // Return stack operators
 defcode('>R', 0, function TRSK() { _retStack.push(_stack.pop()); NEXT();});
 defcode('R>', 0, function FRSK() { _stack.push(_retStack.pop()); NEXT();});
-defcode('RDROP', 0, function() { _retStack.pop(); NEXT();});
+defcode('RDROP', 0, function RSKDROP() { _retStack.pop(); NEXT();});
 
 // INPUT / OUTPUT Operators
 defcode('EMIT', 0, function EMIT() {
@@ -494,7 +513,7 @@ defcode('LIT', 0, function LIT() {
   _stack.push(val);//parseInt(val));
   NEXT();
 });
-defcode('LITSTRING', 0, function() {
+defcode('LITSTRING', 0, function LITSTRING() {
   _ip++;
   var val = _mem[_ip];
   _stack.push(val);       // Should be a string.
@@ -502,7 +521,7 @@ defcode('LITSTRING', 0, function() {
 });
 
 // Words flags Alteration
-defcode('IMMEDIATE', F_IMMED, function() {
+defcode('IMMEDIATE', F_IMMED, function IMMEDIATE() {
   var latest = _mem[latestAddr];
   _mem[latest + 1] ^= F_IMMED;
   NEXT();
@@ -526,6 +545,8 @@ defcode('?STR', 0, function ISSTR() {
   NEXT();
 });
 
+let codeFct = undefined;
+
 defcode('INTERPRET', 0, function INTERPRET() {
   if (_WORD() === null) {
     return;
@@ -535,7 +556,8 @@ defcode('INTERPRET', 0, function INTERPRET() {
 
   _FIND();
 
-  var isCompiling = _mem[stateAddr];
+  var isCompiling = _mem[stateAddr] === '1';
+  var isParsingCode = _mem[stateAddr] === '2';
   var wAddr = _stack.pop();
 
   if (wAddr !== 0) {
@@ -586,7 +608,7 @@ defcode('CHAR', 0, function CHAR() {
   _stack.push(c);
   NEXT();
 });
-defcode('EXECUTE',  0, function() {
+defcode('EXECUTE',  0, function EXECUTE() {
   var TOS = _stack.pop();
   _EXECUTEjs(TOS);
 });
@@ -622,6 +644,9 @@ defword('[', F_IMMED, 'LIT 0 STATE ! EXIT');
 defword(']', 0, 'LIT 1 STATE ! EXIT');
 defword(':', 0, 'WORD CREATE DOCOL! LATEST @ HIDDEN ] EXIT');
 defword(';', F_IMMED, 'LIT EXIT , LATEST @ HIDDEN [ EXIT');
+
+defword('CODE', F_IMMED, 'LIT 2 STATE ! EXIT');
+defword('END-CODE', 0, 'LIT 0 STATE ! EXIT');
 
 // CORE CONSTANT
 defword('CORE_VERSION', 0, 'LIT 3 EXIT');
@@ -663,3 +688,5 @@ export function pushIntoInputBuffer(input) {
   _inputBuffer.push(...getCharCode(input));
   run();
 }
+
+import * as blimbo from './stackOperations'
